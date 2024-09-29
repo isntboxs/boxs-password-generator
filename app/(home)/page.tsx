@@ -1,4 +1,6 @@
+import { FormPasswordGenerator } from "@/components/global/form-password-generator";
+
 function HomePage() {
-  return <div>HomePage</div>;
+  return <FormPasswordGenerator />;
 }
 export default HomePage;
