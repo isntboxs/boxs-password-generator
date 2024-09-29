@@ -76,6 +76,7 @@ export const FormPasswordGenerator = () => {
     <CardGenerator
       title="Password Generator"
       description="Create your secret password with our generator."
+      showFeature
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
