@@ -32,6 +32,7 @@ import { Slider } from "../ui/slider";
 export const FormPasswordGenerator = () => {
   const [passwordLength, setPasswordLength] = useState<number>(16);
   const [password, setPassword] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const minPasswordLength = 1;
   const maxPasswordLength = 50;
@@ -45,15 +46,31 @@ export const FormPasswordGenerator = () => {
   });
 
   const onSubmit = (data: PassGenType) => {
-    passGenAction(data).then((password) => {
-      setPassword(password);
-    });
+    setLoading(true);
+    passGenAction(data)
+      .then((password) => {
+        setPassword(password);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   useEffect(() => {
     form.setValue("length", passwordLength);
     form.handleSubmit(onSubmit)();
   }, [passwordLength, form]);
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(password).then(
+      () => {
+        console.log("Password copied to clipboard");
+      },
+      (err) => {
+        console.error("Could not copy text: ", err);
+      }
+    );
+  };
 
   return (
     <CardGenerator
@@ -63,15 +80,26 @@ export const FormPasswordGenerator = () => {
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <div className="flex flex-row items-center justify-between gap-x-4">
-            <div className="flex h-14 w-[85%] items-center justify-between rounded-lg border bg-background">
-              <p className="mx-2 w-[80%] select-none truncate">{password}</p>
+            <div
+              className="flex h-14 w-[85%] items-center justify-between rounded-lg border bg-background"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              <p
+                className="mx-2 w-[80%] select-none truncate"
+                id="generated-password"
+              >
+                {password}
+              </p>
               <Button
                 className="mr-2"
                 size="icon"
                 variant="outline"
                 type="button"
+                disabled={!password || loading}
+                aria-label="Copy password to clipboard"
               >
-                <ClipboardIcon className="size-5" />
+                <ClipboardIcon className="size-5" onClick={copyToClipboard} />
               </Button>
             </div>
 
@@ -82,8 +110,14 @@ export const FormPasswordGenerator = () => {
               onClick={() => {
                 form.handleSubmit(onSubmit)();
               }}
+              disabled={loading}
+              aria-label="Generate new password"
             >
-              <RefreshCwIcon className="size-5" />
+              {loading ? (
+                <RefreshCwIcon className="size-5 animate-spin duration-1000" />
+              ) : (
+                <RefreshCwIcon className="size-5" />
+              )}
             </Button>
           </div>
 
@@ -109,6 +143,7 @@ export const FormPasswordGenerator = () => {
                       }
                     }}
                     disabled={passwordLength <= minPasswordLength}
+                    aria-label="Decrease password length"
                   >
                     <MinusIcon className="size-5" />
                   </Button>
@@ -125,6 +160,7 @@ export const FormPasswordGenerator = () => {
                       min={minPasswordLength}
                       max={maxPasswordLength}
                       step={1}
+                      aria-labelledby="password-length-slider"
                     />
                   </FormControl>
 
@@ -137,6 +173,7 @@ export const FormPasswordGenerator = () => {
                       }
                     }}
                     disabled={passwordLength >= maxPasswordLength}
+                    aria-label="Increase password length"
                   >
                     <PlusIcon className="size-5" />
                   </Button>
@@ -179,9 +216,11 @@ export const FormPasswordGenerator = () => {
                                   field.onChange(newValue);
                                   form.handleSubmit(onSubmit)();
                                 }}
+                                aria-labelledby={`charset-${item.id}`}
                               />
                             </FormControl>
                             <FormLabel
+                              id={`charset-${item.id}`}
                               className={cn(
                                 "font-bold",
                                 field.value?.includes(item.id)
